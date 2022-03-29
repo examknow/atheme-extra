@@ -57,12 +57,20 @@ struct projectsvs_conf {
 	bool default_open_registration;
 };
 
+struct cloak_request {
+	char *project;
+	char *requestor;
+	char *target;
+	char *cloak;
+};
+
 struct projectsvs {
 	service_t *me;
 	mowgli_patricia_t *projects;
 	mowgli_patricia_t *projects_by_channelns;
 	mowgli_patricia_t *projects_by_cloakns;
 	struct projectsvs_conf config;
+	mowgli_list_t cloak_requests;
 
 	struct projectns *(*project_new)(const char *name);
 	struct projectns *(*project_find)(const char *name);

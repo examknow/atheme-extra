@@ -110,6 +110,17 @@ void project_destroy(struct projectns * const p)
 		mowgli_node_delete(n, &p->marks);
 		mowgli_node_free(n);
 	}
+	MOWGLI_ITER_FOREACH_SAFE(n, tn, projectsvs.cloak_requests.head)
+	{
+		struct cloak_request *request = n->data;
+
+		if (!strcmp(request->project, p->name))
+		{
+			mowgli_node_delete(n, &projectsvs.cloak_requests);
+			mowgli_node_free(n);
+			free(request);
+		}
+	}
 	free(p->name);
 	free(p->reginfo);
 	strshare_unref(p->creator);
@@ -133,6 +144,21 @@ static void userdelete_hook(myuser_t *mu)
 	}
 
 	mowgli_list_free(l);
+
+	MOWGLI_ITER_FOREACH_SAFE(n, tn, projectsvs.cloak_requests.head)
+	{
+		struct cloak_request *request = n->data;
+		struct myuser *tmu = myuser_find_ext(request->target);
+
+		if (tmu && !strcmp(entity(mu)->name, entity(tmu)->name))
+		{
+			slog(LG_REGISTER, _("CLOAK:REQUEST:LOST: \2%s\2 for \2%s\2 (requested by \2%s\2)"), entity(tmu)->name, request->cloak, request->requestor);
+
+			mowgli_node_delete(n, &projectsvs.cloak_requests);
+			mowgli_node_free(n);
+			free(request);
+		}
+	}
 }
 
 void init_structures(void)

@@ -50,7 +50,8 @@ SRCS = \
 	projectns/set.c \
 	projectns/manage.c \
 	projectns/audit.c \
-	projectns/cs_claim.c
+	projectns/cs_claim.c \
+	projectns/cloakrequest.c
 
 # To compile your own modules, add them to SRCS or make blegh.so
 

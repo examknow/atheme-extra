@@ -15,6 +15,7 @@
 #define DB_TYPE_CHANNEL_NAMESPACE "FNCNS"
 #define DB_TYPE_CLOAK_NAMESPACE   "FNHNS"
 #define DB_TYPE_MARK              "FNGM"
+#define DB_TYPE_CLOAK_REQUEST     "FNCR"
 
 // Reading from the database
 static void db_h_project(database_handle_t *db, const char *type)
@@ -122,11 +123,38 @@ static void db_h_cloakns(database_handle_t *db, const char *type)
 	mowgli_node_add(sstrdup(namespace), mowgli_node_create(), &project->cloak_ns);
 }
 
+static void db_h_cloak_requests(database_handle_t *db, const char *type)
+{
+	struct cloak_request *request = smalloc(sizeof *request);
+
+	request->project  = sstrdup(db_sread_word(db));
+	request->requestor = sstrdup(db_sread_word(db));
+	request->target = sstrdup(db_sread_word(db));
+	request->cloak = sstrdup(db_sread_word(db));
+
+	mowgli_node_add(request, mowgli_node_create(), &projectsvs.cloak_requests);
+}
+
 // Writing to the database
 static void write_projects_db(database_handle_t *db)
 {
 	mowgli_patricia_iteration_state_t state;
 	struct projectns *project;
+	mowgli_node_t *n;
+
+
+	MOWGLI_ITER_FOREACH(n, projectsvs.cloak_requests.head)
+	{
+		struct cloak_request *request = n->data;
+
+		db_start_row(db, DB_TYPE_CLOAK_REQUEST);
+		db_write_word(db, request->project);
+		db_write_word(db, request->requestor);
+		db_write_word(db, request->target);
+		db_write_word(db, request->cloak);
+		db_commit_row(db);
+	}
+
 
 	MOWGLI_PATRICIA_FOREACH(project, &state, projectsvs.projects)
 	{
@@ -196,6 +224,7 @@ void init_db (void)
 	db_register_type_handler(DB_TYPE_CONTACT, db_h_contact);
 	db_register_type_handler(DB_TYPE_CHANNEL_NAMESPACE, db_h_channelns);
 	db_register_type_handler(DB_TYPE_CLOAK_NAMESPACE, db_h_cloakns);
+	db_register_type_handler(DB_TYPE_CLOAK_REQUEST, db_h_cloak_requests);
 
 	hook_add_db_write(write_projects_db);
 }
@@ -208,6 +237,7 @@ void deinit_db (void)
 	db_unregister_type_handler(DB_TYPE_CONTACT);
 	db_unregister_type_handler(DB_TYPE_CHANNEL_NAMESPACE);
 	db_unregister_type_handler(DB_TYPE_CLOAK_NAMESPACE);
+	db_unregister_type_handler(DB_TYPE_CLOAK_REQUEST);
 
 	hook_del_db_write(write_projects_db);
 }

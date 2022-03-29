@@ -20,9 +20,9 @@ static void cmd_help(sourceinfo_t *si, int parc, char *parv[])
 {
 	char *command = parv[0];
 
-	if (!has_any_privs(si))
+	if (!has_priv(si, AC_AUTHENTICATED))
 	{
-		command_fail(si, fault_noprivs, _("%s provides utility functionality for network staff. It has no public interface."), si->service->nick);
+		command_fail(si, fault_noprivs, _("You are not authorized to use %s."), si->service->nick);
 		return;
 	}
 
